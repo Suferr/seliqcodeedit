@@ -1,0 +1,1244 @@
+<html><head><base href="." target="_blank">
+<title>Seliq Code Editor</title>
+<style>
+  body {
+    margin: 0;
+    padding: 20px;
+    background: #1e1e1e;
+    color: #fff;
+    font-family: Arial, sans-serif;
+  }
+
+  .container {
+    max-width: 1200px; 
+    margin: 0 auto;
+  }
+
+  .editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  select, button {
+    background: #333;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #444;
+  }
+
+  .tab-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .tab-header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 5px;
+    overflow-x: auto;
+  }
+
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    background: #333;
+    color: #ccc;
+    border: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.3s;
+  }
+
+  .tab.active {
+    background: #4CAF50;
+    color: white;
+  }
+
+  .tab-close {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+  }
+
+  .tab-close:hover {
+    background: rgba(255,255,255,0.2);
+  }
+
+  .add-tab {
+    padding: 8px 15px;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .add-tab:hover {
+    background: #444;
+  }
+
+  #editor {
+    width: 100%;
+    height: 600px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #333;
+    position: relative;
+    display: none;
+  }
+
+  .editor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  .project-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.95);
+    z-index: 1000;
+  }
+
+  .project-modal-content {
+    position: relative;
+    background: #2d2d2d;
+    width: 95%;
+    max-width: none;
+    height: 90vh;
+    margin: 2vh auto;
+    padding: 30px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .project-list {
+    margin: 20px 0;
+    flex: 1;
+    max-height: none;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .project-item {
+    padding: 15px;
+    margin: 8px 0;
+    background: #333;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .project-item:hover {
+    background: #444;
+  }
+
+  .project-actions {
+    padding: 20px 0;
+    border-top: 1px solid #444;
+    margin-top: auto;
+  }
+
+  .project-actions button {
+    padding: 12px 24px;
+    font-size: 16px;
+    transition: background 0.2s;
+  }
+
+  .project-actions button:hover {
+    background: #4CAF50;
+  }
+
+  .project-item button {
+    padding: 8px 16px;
+    margin-left: 15px;
+  }
+
+  .theme-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #fff;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap');
+
+  .project-modal-content h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: #4CAF50;
+    letter-spacing: 1px;
+    margin-bottom: 30px;
+    padding: 0;
+    display: block;
+    text-align: center;
+  }
+
+  .project-modal-content h2::before,
+  .project-modal-content h2::after {
+    display: none;
+  }
+
+  .project-modal-content h2 span.bracket {
+    display: none;
+  }
+  
+  .custom-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2d2d2d;
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateY(150%);
+    transition: transform 0.3s ease-out;
+    z-index: 9999;
+  }
+
+  .custom-notification.show {
+    transform: translateY(0);
+  }
+
+  .custom-notification-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .custom-notification-icon.success {
+    color: #4CAF50;
+  }
+
+  .custom-notification-icon.error {
+    color: #f44336;
+  }
+
+  .custom-notification-icon.info {
+    color: #2196F3;
+  }
+
+  .custom-notification-message {
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .custom-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 2000;
+  }
+
+  .custom-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2d2d2d;
+    padding: 30px;
+    border-radius: 8px;
+    width: 400px;
+  }
+
+  .custom-modal-content h3 {
+    color: #4CAF50;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 0 0 20px;
+  }
+
+  .custom-modal-content input {
+    width: calc(100% - 24px);
+    padding: 12px;
+    margin: 10px 0;
+    background: #333;
+    border: 1px solid #444;
+    color: #fff;
+    border-radius: 4px;
+    font-family: inherit;
+  }
+
+  .custom-modal-content input:focus {
+    outline: none;
+    border-color: #4CAF50;
+  }
+
+  .custom-modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .custom-modal-buttons button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+  }
+
+  .custom-modal-buttons .confirm {
+    background: #4CAF50;
+    color: white;
+  }
+
+  .custom-modal-buttons .cancel {
+    background: #666;
+    color: white;
+  }
+
+  .custom-modal-buttons button:hover {
+    opacity: 0.9;
+  }
+  
+  .ace_error {
+    background-color: rgba(255, 0, 0, 0.15);
+    position: absolute;
+    z-index: 2;
+  }
+
+  .ace_warning {
+    background-color: rgba(255, 255, 0, 0.15);
+    position: absolute;
+    z-index: 2;
+  }
+
+  .ace_info {
+    background-color: rgba(0, 0, 255, 0.15);
+    position: absolute;
+    z-index: 2;
+  }
+
+  .ace_gutter-cell.ace_error {
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBNYWNpbnRvc2giIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6QUM2OEZDQTQ4RTU0MTFFMUEzM0VFRTM2RUY1M0RBMjYiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6QUM2OEZDQTU4RTU0MTFFMUEzM0VFRTM2RUY1M0RBMjYiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDpBQzY4RkNBMjhFNTQxMUUxQTMzRUVFMzZFRjUzREEyNiIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDpBQzY4RkNBMzhFNTQxMUUxQTMzRUVFMzZFRjUzREEyNiIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PkgXxbAAAAJbSURBVHjajFNNaBNBFH4zs5vdZLP5sQmNpT82QY209heh1ioWisaDRcSKF0WKJ0GQnrzrxasHsR6EnlrwD0TagxJabaVEpFYxLWlLSS822tr87m66ccfd2GKyVhA6MMybgfe97/vmPUQphd0sZjto9XIn9OOsvlu2nkqRzVU+6vvlzPf8W6bk8dxQ0NPbxAALgCgg2JkaQuhzQau/El0zbmUA7U0Es8v2CiYmKQJHGO1QICCLoqilMhkmurDAyapKgqItezi/USRdJqEYY4D5jCy03ht2yMkkvL91jTTX10qzyyu2hruPRN7jgbH+EOsXcMLgYiThEgAMhABW85oqy1DXdRIdvP1AHJ2acQXvDIrVHcdQNrEKNYSVMSZGMjEzIIAwDXIo+6G/FxcGnzkC3T2oMhLjre49sBB+RRcHLqdafK6sYdE/GGBwU1VpFNj0aN8pJbe+BkZyevUrvLl6Xmm0W9IuTc0DxrDNAJd5oEvI/KRsNC3bQyNjPO9yQ1YHcfj2QvfQc/5TUhJTBc2iM0U7AWDQtc1nJHvD/cfO2s7jaGkiTEfa/Ep8coLu7zmNmh8+dc5lZDuUeFAGUNA/OY6JVaypQ0vjr7XYjUvJM37vt+j1vuTK5DgVfVUoTjVe+y3/LxMxY2GgU+CSLy4cpfsYorRXuXIOi0Vt40h67uZFTdIo6nLaZcwUJWAzwNS0tBnqqKzQDnjdG/iPyZxo46HaKUpbvYkj8qYRTZsBhge+JHhZyh0x9b95JqjVJkT084kZIPwu/mPWqPgfQ5jXh2+92Ay7HedfAgwA6KDWafb4w3cAAAAASUVORK5CYII=");
+    background-repeat: no-repeat;
+    background-position: 2px center;
+  }
+
+  .ace_gutter-cell.ace_warning {
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBNYWNpbnRvc2giIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6QUM2OEZDQTg4RTU0MTFFMUEzM0VFRTM2RUY1M0RBMjYiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6QUM2OEZDQTk4RTU0MTFFMUEzM0VFRTM2RUY1M0RBMjYiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDpBQzY4RkNBMjhFNTQxMUUxQTMzRUVFMzZFRjUzREEyNiIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDpBQzY4RkNBMzhFNTQxMUUxQTMzRUVFMzZFRjUzREEyNiIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PkgXxbAAAAJbSURBVHjajFNNaBNBFH4zs5vdZLP5sQmNpT82QY209heh1ioWisaDRcSKF0WKJ0GQnrzrxasHsR6EnlrwD0TagxJabaVEpFYxLWlLSS822tr87m66ccfd2GKyVhA6MMybgfe97/vmPUQphd0sZjto9XIn9OOsvlu2nkqRzVU+6vvlzPf8W6bk8dxQ0NPbxAALgCgg2JkaQuhzQau/El0zbmUA7U0Es8v2CiYmKQJHGO1QICCLoqilMhkmurDAyapKgqItezi/USRdJqEYY4D5jCy03ht2yMkkvL91jTTX10qzyyu2hruPRN7jgbH+EOsXcMLgYiThEgAMhABW85oqy1DXdRIdvP1AHJ2acQXvDIrVHcdQNrEKNYSVMSZGMjEzIIAwDXIo+6G/FxcGnzkC3T2oMhLjre49sBB+RRcHLqdafK6sYdE/GGBwU1VpFNj0aN8pJbe+BkZyevUrvLl6Xmm0W9IuTc0DxrDNAJd5oEvI/KRsNC3bQyNjPO9yQ1YHcfj2QvfQc/5TUhJTBc2iM0U7AWDQtc1nJHvD/cfO2s7jaGkiTEfa/Ep8coLu7zmNmh8+dc5lZDuUeFAGUNA/OY6JVaypQ0vjr7XYjUvJM37vt+j1vuTK5DgVfVUoTjVe+y3/LxMxY2GgU+CSLy4cpfsYorRXuXIOi0Vt40h67uZFTdIo6nLaZcwUJWAzwNS0tBnqqKzQDnjdG/iPyZxo46HaKUpbvYkj8qYRTZsBhge+JHhZyh0x9b95JqjVJkT084kZIPwu/mPWqPgfQ5jXh2+92Ay7HedfAgwA6KDWafb4w3cAAAAASUVORK5CYII=");
+    background-repeat: no-repeat;
+    background-position: 2px center;
+  }
+
+  .ace_gutter-cell.ace_info {
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpGRTk5MTVGREIxNDkxMUUxOTc5Q0FFREQyMTNGMjBFQyIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpGRTk5MTVGRUIxNDkxMUUxOTc5Q0FFREQyMTNGMjBFQyI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkZFOTkxNUZCQjE0OTExRTE5NzlDQUVERDIxM0YyMEVDIiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkZFOTkxNUZDQjE0OTExRTE5NzlDQUVERDIxM0YyMEVDIi8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+SWgS2wAAAI9JREFUeNpi/P//PwMlgImBQjDwBrCgGzBt2oB+ZiYWdnRFf/78vnEy2YMRXQFczMnO+Z4hLsl8AgPD/8f/GRi+fzPZlpBk8QHmEFwGfP3xe0LXnBu34SJHQ/UYYP6PDx83vvj4HoXv379bHE/S97awsjGFhUfjMeDnr583bj96B5FmY2PdlBBlYRkYAQYAK+46dX7t/xQAAAAASUVORK5CYII=");
+    background-repeat: no-repeat;
+    background-position: 2px center;
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-language_tools.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-keybinding_menu.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-searchbox.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-error_marker.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-spellcheck.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-static_highlight.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-linking.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-code_lens.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-beautify.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ext-emmet.js"></script>
+</head>
+<body>
+<div id="project-modal" class="project-modal">
+  <div class="project-modal-content">
+    <h2>Seliq Code Edit</h2>
+    <div class="project-list" id="project-list">
+      <!-- Projects will be loaded here -->
+    </div>
+    <div class="project-actions">
+      <button id="new-project-btn">New Project</button>
+    </div>
+  </div>
+</div>
+<div class="container">
+  <div class="tab-container">
+    <div class="tab-header">
+      <button class="add-tab">+ New Tab</button>
+    </div>
+  </div>
+  <div id="editor"></div>
+  <div class="editor-header">
+    <div class="controls">
+      <select id="language-select">
+        <option value="abap">ABAP</option>
+        <option value="abc">ABC</option>
+        <option value="actionscript">ActionScript</option>
+        <option value="ada">Ada</option>
+        <option value="apache_conf">Apache Conf</option>
+        <option value="apex">Apex</option>
+        <option value="aql">AQL</option>
+        <option value="asciidoc">AsciiDoc</option>
+        <option value="assembly_x86">Assembly x86</option>
+        <option value="autohotkey">AutoHotkey</option>
+        <option value="batchfile">Batchfile</option>
+        <option value="c_cpp">C/C++</option>
+        <option value="csharp">C#</option>
+        <option value="c9search">C9Search</option>
+        <option value="cirru">Cirru</option>
+        <option value="clojure">Clojure</option>
+        <option value="cobol">Cobol</option>
+        <option value="coffee">CoffeeScript</option>
+        <option value="coldfusion">ColdFusion</option>
+        <option value="crystal">Crystal</option>
+        <option value="csound_document">Csound Document</option>
+        <option value="csound_orchestra">Csound Orchestra</option>
+        <option value="csound_score">Csound Score</option>
+        <option value="css">CSS</option>
+        <option value="curly">Curly</option>
+        <option value="dart">Dart</option>
+        <option value="diff">Diff</option>
+        <option value="django">Django</option>
+        <option value="dockerfile">Dockerfile</option>
+        <option value="dot">Dot (Graphviz)</option>
+        <option value="drools">Drools</option>
+        <option value="edifact">Edifact</option>
+        <option value="eiffel">Eiffel</option>
+        <option value="ejs">EJS</option>
+        <option value="elixir">Elixir</option>
+        <option value="elm">Elm</option>
+        <option value="erlang">Erlang</option>
+        <option value="fsharp">F#</option>
+        <option value="factor">Factor</option>
+        <option value="forth">Forth</option>
+        <option value="fortran">Fortran</option>
+        <option value="freemarker">FreeMarker</option>
+        <option value="gcode">Gcode</option>
+        <option value="gherkin">Gherkin</option>
+        <option value="gitignore">Gitignore</option>
+        <option value="glsl">GLSL</option>
+        <option value="golang">Go</option>
+        <option value="graphqlschema">GraphQLSchema</option>
+        <option value="groovy">Groovy</option>
+        <option value="haml">HAML</option>
+        <option value="handlebars">Handlebars</option>
+        <option value="haskell">Haskell</option>
+        <option value="haxe">Haxe</option>
+        <option value="hjson">Hjson</option>
+        <option value="html">HTML</option>
+        <option value="html_ruby">HTML (Ruby)</option>
+        <option value="ini">INI</option>
+        <option value="io">Io</option>
+        <option value="jack">Jack</option>
+        <option value="jade">Jade/Pug</option>
+        <option value="java">Java</option>
+        <option value="javascript">JavaScript</option>
+        <option value="json">JSON</option>
+        <option value="json5">JSON5</option>
+        <option value="jsx">JSX</option>
+        <option value="julia">Julia</option>
+        <option value="kotlin">Kotlin</option>
+        <option value="latex">LaTeX</option>
+        <option value="less">LESS</option>
+        <option value="liquid">Liquid</option>
+        <option value="lisp">Lisp</option>
+        <option value="livescript">LiveScript</option>
+        <option value="logiql">LogiQL</option>
+        <option value="lsl">LSL</option>
+        <option value="lua">Lua</option>
+        <option value="luapage">LuaPage</option>
+        <option value="lucene">Lucene</option>
+        <option value="makefile">Makefile</option>
+        <option value="markdown">Markdown</option>
+        <option value="mask">Mask</option>
+        <option value="matlab">MATLAB</option>
+        <option value="maze">Maze</option>
+        <option value="mel">MEL</option>
+        <option value="mysql">MySQL</option>
+        <option value="nginx">Nginx</option>
+        <option value="nim">Nim</option>
+        <option value="nix">Nix</option>
+        <option value="nsis">NSIS</option>
+        <option value="objectivec">Objective-C</option>
+        <option value="ocaml">OCaml</option>
+        <option value="pascal">Pascal</option>
+        <option value="perl">Perl</option>
+        <option value="pgsql">pgSQL</option>
+        <option value="php">PHP</option>
+        <option value="pig">Pig</option>
+        <option value="plain_text">Plain Text</option>
+        <option value="powershell">Powershell</option>
+        <option value="praat">Praat</option>
+        <option value="prisma">Prisma</option>
+        <option value="prolog">Prolog</option>
+        <option value="properties">Properties</option>
+        <option value="protobuf">Protobuf</option>
+        <option value="puppet">Puppet</option>
+        <option value="python">Python</option>
+        <option value="qml">QML</option>
+        <option value="r">R</option>
+        <option value="racket">Racket</option>
+        <option value="razor">Razor</option>
+        <option value="rdoc">RDoc</option>
+        <option value="red">Red</option>
+        <option value="rhtml">RHTML</option>
+        <option value="robot">Robot</option>
+        <option value="rst">RST</option>
+        <option value="ruby">Ruby</option>
+        <option value="rust">Rust</option>
+        <option value="sass">SASS</option>
+        <option value="scad">SCAD</option>
+        <option value="scala">Scala</option>
+        <option value="scheme">Scheme</option>
+        <option value="scss">SCSS</option>
+        <option value="sh">SH</option>
+        <option value="sjs">SJS</option>
+        <option value="slim">Slim</option>
+        <option value="smarty">Smarty</option>
+        <option value="snippets">Snippets</option>
+        <option value="soy_template">Soy Template</option>
+        <option value="space">Space</option>
+        <option value="sparql">Sparql</option>
+        <option value="sql">SQL</option>
+        <option value="sqlserver">SQLServer</option>
+        <option value="stylus">Stylus</option>
+        <option value="svg">SVG</option>
+        <option value="swift">Swift</option>
+        <option value="tcl">Tcl</option>
+        <option value="terraform">Terraform</option>
+        <option value="tex">Tex</option>
+        <option value="textile">Textile</option>
+        <option value="toml">TOML</option>
+        <option value="tsx">TSX</option>
+        <option value="turtle">Turtle</option>
+        <option value="twig">Twig</option>
+        <option value="typescript">TypeScript</option>
+        <option value="vala">Vala</option>
+        <option value="vbscript">VBScript</option>
+        <option value="velocity">Velocity</option>
+        <option value="verilog">Verilog</option>
+        <option value="vhdl">VHDL</option>
+        <option value="visualforce">Visualforce</option>
+        <option value="wollok">Wget</option>
+        <option value="yaml">YAML</option>
+        <option value="zeek">Zeek</option>
+      </select>
+      <button id="open-btn">Open</button>
+      <button id="download-btn">Download</button>
+    </div>
+    <div class="theme-switch">
+      <span>Theme:</span>
+      <select id="theme-select">
+        <option value="monokai">Monokai</option>
+        <option value="ambiance">Ambiance</option>
+        <option value="chaos">Chaos</option>
+        <option value="chrome">Chrome</option>
+        <option value="cloud9_day">Cloud9 Day</option>
+        <option value="clouds_midnight">Clouds Midnight</option>
+        <option value="crimson_editor">Crimson Editor</option>
+        <option value="cobalt">Cobalt</option>
+        <option value="dawn">Dawn</option>
+        <option value="dracula">Dracula</option>
+        <option value="dreamweaver">Dreamweaver</option>
+        <option value="eclipse">Eclipse</option>
+        <option value="github">GitHub</option>
+        <option value="gruvbox">Gruvbox</option>
+        <option value="idle_fingers">Idle Fingers</option>
+        <option value="iplastic">Iplastic</option>
+        <option value="katzenmilch">Katzenmilch</option>
+        <option value="kr_theme">Kr Theme</option>
+        <option value="kuroir">Kuroir</option>
+        <option value="merbivore">Merbivore</option>
+        <option value="merbivore_soft">Merbivore Soft</option>
+        <option value="mono_industrial">Mono Industrial</option>
+        <option value="nord_dark">Nord Dark</option>
+        <option value="pastel_on_dark">Pastel on Dark</option>  
+        <option value="solarized_dark">Solarized Dark</option>
+        <option value="solarized_light">Solarized Light</option>
+        <option value="terminal">Terminal</option>
+        <option value="textmate">TextMate</option>
+        <option value="tomorrow">Tomorrow</option>
+        <option value="tomorrow_night">Tomorrow Night</option>
+        <option value="tomorrow_night_blue">Tomorrow Night Blue</option>
+        <option value="tomorrow_night_bright">Tomorrow Night Bright</option>
+        <option value="tomorrow_night_eighties">Tomorrow Night Eighties</option>
+        <option value="twilight">Twilight</option>
+        <option value="vibrant_ink">Vibrant Ink</option>
+        <option value="xcode">Xcode</option>
+      </select>
+    </div>
+  </div>
+</div>
+<div class="custom-modal" id="project-name-modal">
+  <div class="custom-modal-content">
+    <h3>Create New Project</h3>
+    <input type="text" id="project-name-input" placeholder="Enter project name">
+    <div class="custom-modal-buttons">
+      <button class="cancel" id="cancel-project">Cancel</button>
+      <button class="confirm" id="confirm-project">Create</button>
+    </div>
+  </div>
+</div>
+<div class="custom-modal" id="delete-project-modal">
+  <div class="custom-modal-content">
+    <h3>Delete Project</h3>
+    <p style="color: #f44336; margin-bottom: 20px;">Are you sure you want to delete this project? This action cannot be undone.</p>
+    <div class="custom-modal-buttons">
+      <button class="cancel" id="cancel-delete">Cancel</button>
+      <button class="confirm" id="confirm-delete" style="background: #f44336;">Delete</button>
+    </div>
+  </div>
+</div>
+<div class="custom-modal" id="custom-notification" style="display: none;">
+  <div class="custom-notification">
+    <div class="custom-notification-icon"></div>
+    <div class="custom-notification-message"></div>
+  </div>
+</div>
+
+<script>let editors = [];
+let activeEditorIndex = 0;
+class EditorTab {
+  constructor(id = 0) {
+    this.id = id;
+    this.name = `Tab ${id + 1}`;
+    this.editor = null;
+    this.language = 'javascript';
+    this.content = `function example() {
+  const greeting = "Hello, World!";
+  console.log(greeting);
+  
+  // Add your code here
+  return greeting;
+}
+
+example();`;
+  }
+  initialize() {
+    const editorDiv = document.createElement('div');
+    editorDiv.id = `editor-${this.id}`;
+    editorDiv.className = 'editor';
+    editorDiv.style.width = '100%';
+    editorDiv.style.height = '600px';
+    editorDiv.style.display = 'none';
+    document.querySelector('#editor').appendChild(editorDiv);
+    this.editor = ace.edit(editorDiv.id);
+    ace.require("ace/ext/language_tools");
+    this.editor.setTheme("ace/theme/monokai");
+    this.editor.session.setMode("ace/mode/javascript");
+    this.editor.setFontSize("14px");
+    this.editor.setOptions({
+      enableBasicAutocompletion: true,
+      enableSnippets: true,
+      enableLiveAutocompletion: true,
+      enableEmmet: true,
+      spellcheck: true,
+      showFoldWidgets: true,
+      showGutter: true,
+      highlightActiveLine: true,
+      showInvisibles: false,
+      displayIndentGuides: true,
+      fontSize: "14px",
+      highlightSelectedWord: true,
+      showPrintMargin: false,
+      cursorStyle: 'ace',
+      mergeUndoDeltas: true,
+      animatedScroll: true,
+      fadeFoldWidgets: true,
+      showLineNumbers: true,
+      showGutter: true,
+      highlightGutterLine: true,
+      showInvisibles: false,
+      useSoftTabs: true,
+      navigateWithinSoftTabs: true
+    });
+    ace.require('ace/ext/language_tools');
+    ace.require('ace/ext/keybinding_menu');
+    ace.require('ace/ext/searchbox');
+    ace.require('ace/ext/error_marker');
+    ace.require('ace/ext/spellcheck');
+    ace.require('ace/ext/static_highlight');
+    ace.require('ace/ext/linking');
+    ace.require('ace/ext/code_lens');
+    ace.require('ace/ext/beautify');
+    this.editor.getSession().setAnnotations([]);
+    this.editor.getSession().setUseWorker(true);
+    this.editor.commands.addCommand({
+      name: 'showKeyboardShortcuts',
+      bindKey: {
+        win: 'Ctrl-Alt-h',
+        mac: 'Command-Alt-h'
+      },
+      exec: function (editor) {
+        ace.config.loadModule('ace/ext/keybinding_menu', function (module) {
+          module.init(editor);
+          editor.showKeyboardShortcuts();
+        });
+      }
+    });
+    this.editor.commands.addCommand({
+      name: 'showCommandPalette',
+      bindKey: {
+        win: 'Ctrl-Shift-P',
+        mac: 'Command-Shift-P'
+      },
+      exec: function (editor) {}
+    });
+    this.editor.setOption('enableEmmet', true);
+    this.editor.commands.addCommand({
+      name: 'foldAll',
+      bindKey: {
+        win: 'Ctrl-Alt-0',
+        mac: 'Command-Alt-0'
+      },
+      exec: function (editor) {
+        editor.getSession().foldAll();
+      }
+    });
+    this.editor.commands.addCommand({
+      name: 'unfoldAll',
+      bindKey: {
+        win: 'Ctrl-Alt-Shift-0',
+        mac: 'Command-Alt-Shift-0'
+      },
+      exec: function (editor) {
+        editor.getSession().unfoldAll();
+      }
+    });
+    this.editor.container.addEventListener('contextmenu', function (e) {
+      e.preventDefault();
+    });
+    return this;
+  }
+}
+function createTabElement(tab) {
+  const tabEl = document.createElement('button');
+  tabEl.className = `tab ${tab.id === activeEditorIndex ? 'active' : ''}`;
+  tabEl.innerHTML = `
+    <span>${tab.name}</span>
+    <span class="tab-close">×</span>
+  `;
+  tabEl.addEventListener('click', e => {
+    if (!e.target.classList.contains('tab-close')) {
+      switchToTab(tab.id);
+    }
+  });
+  tabEl.querySelector('.tab-close').addEventListener('click', e => {
+    e.stopPropagation();
+    closeTab(tab.id);
+  });
+  return tabEl;
+}
+function addTab() {
+  const newTab = new EditorTab(editors.length).initialize();
+  editors.push(newTab);
+  const tabHeader = document.querySelector('.tab-header');
+  const tabEl = createTabElement(newTab);
+  tabHeader.insertBefore(tabEl, document.querySelector('.add-tab'));
+  newTab.editor.on('change', () => {
+    saveEditors();
+  });
+  switchToTab(newTab.id);
+  document.getElementById('editor').style.display = 'block';
+}
+function switchToTab(id) {
+  editors.forEach((tab, index) => {
+    const tabEl = document.querySelector(`.tab:nth-child(${index + 1})`);
+    const editorEl = document.getElementById(`editor-${tab.id}`);
+    if (tab.id === id) {
+      tabEl?.classList.add('active');
+      editorEl.style.display = 'block';
+      activeEditorIndex = id;
+      document.getElementById('editor').style.display = 'block';
+      tab.editor.resize();
+    } else {
+      tabEl?.classList.remove('active');
+      editorEl.style.display = 'none';
+    }
+  });
+}
+function closeTab(id) {
+  if (editors.length === 1) {
+    showNotification('Cannot close the last remaining tab', 'error');
+    return;
+  }
+  const index = editors.findIndex(tab => tab.id === id);
+  if (index === -1) return;
+  document.getElementById(`editor-${id}`).remove();
+  document.querySelector(`.tab:nth-child(${index + 1})`).remove();
+  editors.splice(index, 1);
+  if (activeEditorIndex === id) {
+    const newIndex = Math.max(0, index - 1);
+    switchToTab(editors[newIndex].id);
+  }
+}
+let currentProject = null;
+function showProjectModal() {
+  document.getElementById('project-modal').style.display = 'block';
+  document.getElementById('editor').style.display = 'none';
+  loadProjects();
+}
+function loadProjects() {
+  const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+  const projectList = document.getElementById('project-list');
+  projectList.innerHTML = '';
+  projects.forEach(project => {
+    const div = document.createElement('div');
+    div.className = 'project-item';
+    div.innerHTML = `
+      <span>${project.name} (${new Date(project.created).toLocaleDateString()})</span>
+      <div>
+        <button onclick="openProject('${project.name}')">Open</button>
+        <button onclick="deleteProject('${project.name}')">Delete</button>
+      </div>
+    `;
+    projectList.appendChild(div);
+  });
+}
+function createNewProject() {
+  document.getElementById('project-name-modal').style.display = 'block';
+  const input = document.getElementById('project-name-input');
+  input.value = '';
+  input.focus();
+  function handleCreate() {
+    const name = input.value.trim();
+    if (!name) {
+      showNotification('Project name is required', 'error');
+      return;
+    }
+    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+    if (projects.find(p => p.name === name)) {
+      showNotification('Project name already exists', 'error');
+      return;
+    }
+    const newProject = {
+      name,
+      files: [{
+        name: 'Tab 1',
+        content: `function example() {
+  const greeting = "Hello, World!";
+  console.log(greeting);
+  
+  // Add your code here
+  return greeting;
+}
+
+example();`,
+        language: 'javascript'
+      }],
+      created: new Date().toISOString()
+    };
+    try {
+      projects.push(newProject);
+      localStorage.setItem('projects', JSON.stringify(projects));
+      currentProject = newProject;
+      editors = [];
+      document.querySelectorAll('.editor').forEach(el => el.remove());
+      document.querySelectorAll('.tab').forEach(el => el.remove());
+      openProject(name);
+      showNotification(`Project "${name}" created successfully`, 'success');
+      document.getElementById('project-name-modal').style.display = 'none';
+    } catch (e) {
+      if (e.name === 'QuotaExceededError') {
+        showNotification('Cannot create project - storage is full! Please delete some projects.', 'error');
+      } else {
+        showNotification('Error creating project: ' + e.message, 'error');
+      }
+    }
+  }
+  function handleCancel() {
+    document.getElementById('project-name-modal').style.display = 'none';
+  }
+  function handleKeyPress(e) {
+    if (e.key === 'Enter') {
+      handleCreate();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+  }
+  document.getElementById('confirm-project').onclick = handleCreate;
+  document.getElementById('cancel-project').onclick = handleCancel;
+  input.onkeydown = handleKeyPress;
+}
+function openProject(name) {
+  const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+  const project = projects.find(p => p.name === name);
+  if (!project) return;
+  currentProject = project;
+  editors = [];
+  document.querySelectorAll('.editor').forEach(el => el.remove());
+  document.querySelectorAll('.tab').forEach(el => el.remove());
+  if (!project.files || project.files.length === 0) {
+    project.files = [{
+      name: 'Tab 1',
+      content: `function example() {
+  const greeting = "Hello, World!";
+  console.log(greeting);
+  
+  // Add your code here
+  return greeting;
+}
+
+example();`,
+      language: 'javascript'
+    }];
+  }
+  project.files.forEach(file => {
+    const newTab = new EditorTab(editors.length).initialize();
+    newTab.name = file.name;
+    newTab.editor.setValue(file.content || '', -1);
+    newTab.editor.session.setMode(`ace/mode/${file.language}`);
+    newTab.language = file.language;
+    newTab.editor.on('change', () => {
+      saveEditors();
+    });
+    editors.push(newTab);
+    const tabHeader = document.querySelector('.tab-header');
+    const tabEl = createTabElement(newTab);
+    tabHeader.insertBefore(tabEl, document.querySelector('.add-tab'));
+  });
+  switchToTab(0);
+  document.getElementById('project-modal').style.display = 'none';
+  document.getElementById('editor').style.display = 'block';
+}
+function deleteProject(name) {
+  const projectToDelete = name;
+  document.getElementById('delete-project-modal').style.display = 'block';
+  function handleDelete() {
+    try {
+      const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+      const updatedProjects = projects.filter(p => p.name !== projectToDelete);
+      localStorage.setItem('projects', JSON.stringify(updatedProjects));
+      if (currentProject?.name === projectToDelete) {
+        currentProject = null;
+        editors = [];
+        document.querySelectorAll('.editor').forEach(el => el.remove());
+        document.querySelectorAll('.tab').forEach(el => el.remove());
+        addTab();
+      }
+      loadProjects();
+      document.getElementById('delete-project-modal').style.display = 'none';
+      showNotification(`Project "${projectToDelete}" deleted successfully`, 'success');
+    } catch (err) {
+      showNotification('Error deleting project: ' + err.message, 'error');
+    }
+  }
+  function handleCancel() {
+    document.getElementById('delete-project-modal').style.display = 'none';
+  }
+  document.getElementById('confirm-delete').onclick = handleDelete;
+  document.getElementById('cancel-delete').onclick = handleCancel;
+  document.addEventListener('keydown', function closeOnEscape(e) {
+    if (e.key === 'Escape') {
+      handleCancel();
+      document.removeEventListener('keydown', closeOnEscape);
+    }
+  });
+  document.getElementById('delete-project-modal').addEventListener('click', function (e) {
+    if (e.target.id === 'delete-project-modal') {
+      handleCancel();
+    }
+  });
+}
+function saveEditors() {
+  if (!currentProject) return;
+  try {
+    currentProject.files = editors.map(tab => ({
+      name: tab.name,
+      content: tab.editor.getValue(),
+      language: tab.language
+    }));
+    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+    const projectIndex = projects.findIndex(p => p.name === currentProject.name);
+    if (projectIndex >= 0) {
+      projects[projectIndex] = currentProject;
+      const projectsStr = JSON.stringify(projects);
+      try {
+        localStorage.setItem('projects', projectsStr);
+      } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+          showNotification('Storage quota exceeded - trying cleanup...', 'error');
+          while (projects.length > 1 && projectsStr.length > 5242880) {
+            projects.shift();
+            projectsStr = JSON.stringify(projects);
+          }
+          try {
+            localStorage.setItem('projects', JSON.stringify(projects));
+          } catch (e2) {
+            showNotification('Failed to save - storage full! Please delete some projects.', 'error');
+          }
+        }
+      }
+    }
+  } catch (err) {
+    showNotification('Error saving project: ' + err.message, 'error');
+  }
+}
+function showNotification(message, type = 'info', duration = 3000) {
+  const existingNotification = document.querySelector('.custom-notification');
+  if (existingNotification) {
+    existingNotification.remove();
+  }
+  const notification = document.createElement('div');
+  notification.className = 'custom-notification';
+  const icon = document.createElement('div');
+  icon.className = `custom-notification-icon ${type}`;
+  let iconSvg = '';
+  switch (type) {
+    case 'success':
+      iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+      break;
+    case 'error':
+      iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+      break;
+    default:
+      iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+  }
+  icon.innerHTML = iconSvg;
+  const messageEl = document.createElement('div');
+  messageEl.className = 'custom-notification-message';
+  messageEl.textContent = message;
+  notification.appendChild(icon);
+  notification.appendChild(messageEl);
+  document.body.appendChild(notification);
+  notificationSound.play();
+  setTimeout(() => notification.classList.add('show'), 10);
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => notification.remove(), 300);
+  }, duration);
+}
+const notificationSound = new Audio('https://cdn.glitch.global/c783e3a9-3a48-4de4-b41b-889fc79c4df1/notification-1-269296.mp3?v=1735460641311');
+function openFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.abap,.abc,.as,.ada,.conf,.apex,.aql,.adoc,.asm,.ahk,.bat,.c,.cpp,.cs,.cirru,.clj,.cob,.coffee,.cfm,.cr,.csd,.orc,.sco,.css,.curly,.dart,.diff,.django,.dockerfile,.dot,.drl,.edi,.e,.ejs,.ex,.elm,.erl,.fs,.factor,.fth,.f90,.ftl,.gcode,.feature,.gitignore,.glsl,.go,.gql,.groovy,.haml,.hbs,.hs,.hx,.hjson,.html,.erb,.ini,.io,.jack,.jade,.java,.js,.json,.json5,.jsx,.jl,.kt,.tex,.less,.liquid,.lisp,.ls,.lql,.lsl,.lua,.lp,.lucene,.mk,.md,.mask,.m,.maze,.mel,.sql,.nginx,.nim,.nix,.nsi,.m,.ml,.pas,.pl,.pgsql,.php,.pig,.txt,.ps1,.praat,.prisma,.pl,.properties,.proto,.pp,.py,.qml,.r,.rkt,.cshtml,.rdoc,.red,.rhtml,.robot,.rst,.rb,.rs,.sass,.scad,.scala,.scm,.scss,.sh,.sjs,.slim,.smarty,.snippets,.soy,.space,.sparql,.sql,.sql,.styl,.svg,.swift,.tcl,.tf,.tex,.textile,.toml,.tsx,.turtle,.twig,.ts,.vala,.vbs,.vm,.v,.vhd,.page,.wget,.yml,.zeek';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        if (editors && editors[activeEditorIndex] && editors[activeEditorIndex].editor) {
+          editors[activeEditorIndex].editor.setValue(e.target.result, -1);
+          const modelist = ace.require("ace/ext/modelist");
+          const mode = modelist.getModeForPath(file.name).mode;
+          editors[activeEditorIndex].editor.session.setMode(mode);
+          const modeBase = mode.replace('ace/mode/', '');
+          const languageSelect = document.getElementById('language-select');
+          if ([...languageSelect.options].some(opt => opt.value === modeBase)) {
+            languageSelect.value = modeBase;
+          }
+          showNotification('File loaded successfully', 'success');
+        } else {
+          showNotification('Error: Editor not initialized', 'error');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+  input.click();
+}
+document.getElementById('open-btn').addEventListener('click', openFile);
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey) {
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      const editor = editors[activeEditorIndex].editor;
+      const currentSize = parseInt(editor.getFontSize());
+      editor.setFontSize(Math.min(currentSize + 2, 72) + 'px');
+    } else if (e.key === '-') {
+      e.preventDefault();
+      const editor = editors[activeEditorIndex].editor;
+      const currentSize = parseInt(editor.getFontSize());
+      editor.setFontSize(Math.max(currentSize - 2, 8) + 'px');
+    } else if (e.key === 'o') {
+      e.preventDefault();
+      openFile();
+    }
+  }
+});
+document.getElementById('editor').addEventListener('wheel', e => {
+  const editorRect = e.currentTarget.getBoundingClientRect();
+  const isInsideEditor = e.clientX >= editorRect.left && e.clientX <= editorRect.right && e.clientY >= editorRect.top && e.clientY <= editorRect.bottom;
+  if (e.ctrlKey && isInsideEditor) {
+    e.preventDefault();
+    const editor = editors[activeEditorIndex].editor;
+    const currentSize = parseInt(editor.getFontSize());
+    if (e.deltaY < 0) {
+      editor.setFontSize(Math.min(currentSize + 2, 72) + 'px');
+    } else {
+      editor.setFontSize(Math.max(currentSize - 2, 8) + 'px');
+    }
+  }
+});
+document.getElementById("language-select").addEventListener("change", e => {
+  const activeEditor = editors[activeEditorIndex];
+  const newLanguage = e.target.value;
+  activeEditor.editor.session.setMode(`ace/mode/${newLanguage}`);
+  activeEditor.language = newLanguage;
+  const currentContent = activeEditor.editor.getValue().trim();
+  const isDefaultContent = currentContent === "" || currentContent.includes("function example()") || currentContent === "// Add your code here";
+  if (isDefaultContent) {
+    const snippet = getLanguageSnippet(newLanguage);
+    activeEditor.editor.setValue(snippet, -1);
+    activeEditor.editor.clearSelection();
+  }
+  saveEditors();
+});
+function getLanguageSnippet(language) {
+  const snippets = {
+    javascript: `// JavaScript Example
+function greet(name) {
+  return "Hello, " + name + "!";
+}
+
+console.log(greet("World"));`,
+    python: `# Python Example
+def greet(name):
+    return f"Hello, {name}!"
+
+print(greet("World"))`,
+    html: `<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello World</title>
+</head>
+<body>
+    <h1>Hello World!</h1>
+</body>
+</html>`,
+    css: `/* CSS Example */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f0f0;
+}`,
+    java: `// Java Example
+public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}`,
+    cpp: `// C++ Example
+#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Hello, World!" << endl;
+    return 0;
+}`,
+    ruby: `# Ruby Example
+def greet(name)
+  "Hello, #{name}!"
+end
+
+puts greet("World")`,
+    php: `<?php
+// PHP Example
+function greet($name) {
+    return "Hello, " . $name . "!";
+}
+
+echo greet("World");
+?>`,
+    sql: `-- SQL Example
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE
+);
+
+INSERT INTO users (name, email) 
+VALUES ('John Doe', 'john@example.com');`,
+    rust: `// Rust Example
+fn main() {
+    println!("Hello, World!");
+}`,
+    go: `// Go Example
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, World!")
+}`,
+    typescript: `// TypeScript Example
+interface Person {
+    name: string;
+    age: number;
+}
+
+function greet(person: Person): string {
+    return \`Hello, \${person.name}! You are \${person.age} years old.\`;
+}
+
+const person: Person = { name: "John", age: 30 };
+console.log(greet(person));`,
+    default: `// ${language} Example
+// Add your code here`
+  };
+  return snippets[language] || snippets.default;
+}
+document.getElementById("theme-select").addEventListener("change", e => {
+  editors.forEach(tab => {
+    tab.editor.setTheme(`ace/theme/${e.target.value}`);
+  });
+});
+function showUpdateLog() {
+  document.getElementById('update-log-modal').style.display = 'block';
+}
+function closeUpdateLog() {
+  document.getElementById('update-log-modal').style.display = 'none';
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('new-project-btn').addEventListener('click', createNewProject);
+  showProjectModal();
+  document.getElementById('project-name-modal').addEventListener('click', e => {
+    if (e.target.className === 'custom-modal') {
+      e.target.style.display = 'none';
+    }
+  });
+});
+document.querySelector('.add-tab').addEventListener('click', addTab);</script>
+</body></html>
